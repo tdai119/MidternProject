@@ -42,6 +42,20 @@ public class Home extends javax.swing.JFrame {
     public void setCurrentUserId(int UserId) {
         this.currentUserId = UserId;
         tableViewStudent();
+        displayUserProfilePicture();
+    }
+
+    private void displayUserProfilePicture() {
+        UserService userService = new UserService();
+        byte[] profilePic = userService.getUserProfilePicture(currentUserId);
+
+        if (profilePic != null && profilePic.length > 0) {
+            ImageIcon imageIcon = new ImageIcon(profilePic);
+            Image image = imageIcon.getImage().getScaledInstance(jLabel14.getWidth(), jLabel14.getHeight(), Image.SCALE_SMOOTH);
+            jLabel14.setIcon(new ImageIcon(image));
+        } else {
+            jLabel14.setIcon(null); 
+        }
     }
 
     /**
@@ -109,6 +123,7 @@ public class Home extends javax.swing.JFrame {
         jButton15 = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jPanel11 = new javax.swing.JPanel();
+        jLabel14 = new javax.swing.JLabel();
         SettingBtn = new javax.swing.JButton();
         LogoutBtn = new javax.swing.JButton();
 
@@ -600,11 +615,17 @@ public class Home extends javax.swing.JFrame {
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false, true
+                false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
+            }
+        });
+        UserTable.setShowGrid(true);
+        UserTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                UserTableMouseClicked(evt);
             }
         });
         jScrollPane2.setViewportView(UserTable);
@@ -663,11 +684,11 @@ public class Home extends javax.swing.JFrame {
         jPanel11.setLayout(jPanel11Layout);
         jPanel11Layout.setHorizontalGroup(
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 79, Short.MAX_VALUE)
+            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE)
         );
         jPanel11Layout.setVerticalGroup(
             jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
+            .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
 
         SettingBtn.setText("Setting");
@@ -767,6 +788,33 @@ public class Home extends javax.swing.JFrame {
 
     private void UpdateUserBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateUserBtnActionPerformed
         // TODO add your handling code here:
+        int selectedRow = UserTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user to update.", "No User Selected", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) UserTable.getModel();
+        int userId = (Integer) model.getValueAt(selectedRow, 0);
+
+        String name = TextName.getText();
+        int age = (Integer) jSpinner1.getValue();
+        String phoneNumber = TextUserPhoneNum.getText();
+        String status = StatusBox.getSelectedItem().toString();
+        String roleName = RoleBox.getSelectedItem().toString();
+
+        // Create a User object with updated information
+        User updatedUser = new User(userId, null, null, null, name, age, phoneNumber, status, roleName);
+
+        // Update the user
+        UserService userService = new UserService();
+        if (userService.updateUser(updatedUser)) {
+            JOptionPane.showMessageDialog(this, "User updated successfully.", "User Updated", JOptionPane.INFORMATION_MESSAGE);
+            clearUser();
+            refreshUserTable();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update user.", "Update Failed", JOptionPane.ERROR_MESSAGE);
+        }
     }//GEN-LAST:event_UpdateUserBtnActionPerformed
 
     private void HistoryBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HistoryBtnActionPerformed
@@ -775,6 +823,27 @@ public class Home extends javax.swing.JFrame {
 
     private void DeleteUserBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteUserBtnActionPerformed
         // TODO add your handling code here:
+        int selectedRow = UserTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user to delete.", "No User Selected", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) UserTable.getModel();
+        int userId = (Integer) model.getValueAt(selectedRow, 0); // Assuming the ID is in the first column
+
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this user?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            UserService userService = new UserService();
+            boolean isDeleted = userService.deleteUser(userId);
+            if (isDeleted) {
+                JOptionPane.showMessageDialog(this, "User deleted successfully.", "User Deleted", JOptionPane.INFORMATION_MESSAGE);
+                clearUser();
+                refreshUserTable(); // Refresh the table to reflect the deletion
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to delete user.", "Deletion Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }//GEN-LAST:event_DeleteUserBtnActionPerformed
 
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
@@ -971,11 +1040,12 @@ public class Home extends javax.swing.JFrame {
             }
 
             // Create a User object with roleName
-            User newUser = new User(-1, username, hashedPassword, null, name, age, phoneNumber, status, roleName);
+            User newUser = new User(-1, username, hashedPassword, imageBytes, name, age, phoneNumber, status, roleName);
 
             // Add the user
             if (userService.addUser(newUser)) {
                 JOptionPane.showMessageDialog(this, "User added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                clearUser();
                 refreshUserTable(); // Call the method to refresh the table
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to add user.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1002,7 +1072,7 @@ public class Home extends javax.swing.JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setFileFilter(new FileNameExtensionFilter("Image files", "jpg", "png", "gif", "jpeg"));
 
-        int option = fileChooser.showOpenDialog(this); // 'this' refers to the current JFrame/Form
+        int option = fileChooser.showOpenDialog(this);
         if (option == JFileChooser.APPROVE_OPTION) {
             selectedImageFile = fileChooser.getSelectedFile();
 
@@ -1011,10 +1081,45 @@ public class Home extends javax.swing.JFrame {
             imageLabel.setIcon(imageIcon);
         }
     }//GEN-LAST:event_BrowseBtnActionPerformed
+
+    private void UserTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_UserTableMouseClicked
+        // TODO add your handling code here:
+        int selectedRow = UserTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            DefaultTableModel model = (DefaultTableModel) UserTable.getModel();
+
+            int userId = (Integer) model.getValueAt(selectedRow, 0);
+            String roleName = model.getValueAt(selectedRow, 5).toString();
+
+            if ("Admin".equals(roleName)) {
+                JOptionPane.showMessageDialog(this, "Admin user cannot be selected.", "Selection Not Allowed", JOptionPane.WARNING_MESSAGE);
+                UserTable.clearSelection(); // Clear the selection
+                return; // Exit the method to prevent further processing
+            }
+
+            // Update the input fields based on the selected row for non-Admin users
+            TextName.setText(model.getValueAt(selectedRow, 1).toString());
+            jSpinner1.setValue(model.getValueAt(selectedRow, 2));
+            TextUserPhoneNum.setText(model.getValueAt(selectedRow, 3).toString());
+            StatusBox.setSelectedItem(model.getValueAt(selectedRow, 4).toString());
+            RoleBox.setSelectedItem(model.getValueAt(selectedRow, 5).toString());
+
+            // Fetch and display profile picture
+            UserService userService = new UserService();
+            byte[] profilePic = userService.getUserProfilePicture(userId);
+            if (profilePic != null) {
+                ImageIcon imageIcon = new ImageIcon(profilePic);
+                Image image = imageIcon.getImage().getScaledInstance(imageLabel.getWidth(), imageLabel.getHeight(), Image.SCALE_SMOOTH);
+                imageLabel.setIcon(new ImageIcon(image));
+            } else {
+                imageLabel.setIcon(null); // Clear the label or set a default image if no profile picture
+            }
+        }
+    }//GEN-LAST:event_UserTableMouseClicked
     public byte[] convertImageToByteArray(File file) throws IOException {
         BufferedImage bImage = ImageIO.read(file);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ImageIO.write(bImage, "jpg", bos); // You may need to handle different image formats
+        ImageIO.write(bImage, "jpg", bos);
         return bos.toByteArray();
     }
 
@@ -1108,6 +1213,7 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
+    private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
