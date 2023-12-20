@@ -59,4 +59,58 @@ public class UserService {
         return false;
     }
 
+    public boolean deleteUser(int userId) {
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        try (Connection conn = DbConnection.getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setInt(1, userId);
+            int affectedRows = pst.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+            return false;
+        }
+    }
+    
+    public boolean updateUser(User user) {
+        String sql = "UPDATE users SET name = ?, age = ?, phone_number = ?, status = ?, role_id = (SELECT role_id FROM roles WHERE role_name = ?) WHERE user_id = ?";
+        try (Connection conn = DbConnection.getConnection(); PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setString(1, user.getName());
+            pst.setInt(2, user.getAge());
+            pst.setString(3, user.getPhoneNumber());
+            pst.setString(4, user.getStatus());
+            pst.setString(5, user.getRoleName()); 
+            pst.setInt(6, user.getUserId());
+
+            int affectedRows = pst.executeUpdate();
+            return affectedRows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+            return false;
+        }
+    }
+    
+    public byte[] getUserProfilePicture(int userId) {
+        String sql = "SELECT profile_picture FROM users WHERE user_id = ?";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+            
+            pst.setInt(1, userId);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBytes("profile_picture");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+        }
+        return null; 
+    }
+
+
 }
