@@ -170,5 +170,23 @@ public class UserService {
         }
         return null; // Return null if the user's role is not found or in case of an error
     }
+    
+    public String getName(int userId) {
+        String sql = "SELECT name FROM users WHERE user_id = ?";
+        try (Connection conn = DbConnection.getConnection();
+             PreparedStatement pst = conn.prepareStatement(sql)) {
+
+            pst.setInt(1, userId);
+            try (ResultSet rs = pst.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+        }
+        return null; 
+    }
 
 }
