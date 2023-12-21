@@ -14,6 +14,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -21,7 +25,9 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import org.mindrot.jbcrypt.BCrypt;
+import studentmanament.entity.Student;
 import studentmanament.entity.User;
+import studentmanament.service.StudentService;
 import studentmanament.service.UserService;
 
 /**
@@ -38,11 +44,18 @@ public class Home extends javax.swing.JFrame {
     }
 
     private int currentUserId;
+    String userRole;
+    private int selectedStudentId = -1;
 
     public void setCurrentUserId(int UserId) {
         this.currentUserId = UserId;
         tableViewStudent();
         displayUserProfilePicture();
+        UserService userService = new UserService();
+        userRole = userService.getUserRole(currentUserId);
+
+        setupUIBasedOnRole(userRole);
+
     }
 
     private void displayUserProfilePicture() {
@@ -54,8 +67,46 @@ public class Home extends javax.swing.JFrame {
             Image image = imageIcon.getImage().getScaledInstance(jLabel14.getWidth(), jLabel14.getHeight(), Image.SCALE_SMOOTH);
             jLabel14.setIcon(new ImageIcon(image));
         } else {
-            jLabel14.setIcon(null); 
+            jLabel14.setIcon(null);
         }
+    }
+
+    private void setupUIBasedOnRole(String userRole) {
+        if ("Admin".equals(userRole)) {
+            // Enable UserPanel for admins
+            //UserPanel.setEnabled(true);
+            //UserPanel.setVisible(true);
+
+            // Enable all functionality in StudentPanel
+            enableStudentPanelControls(true);
+        } else if ("Manager".equals(userRole)) {
+            // Disable or hide UserPanel for managers
+            //UserPanel.setEnabled(false);
+            //UserPanel.setVisible(false);
+
+            // Enable all controls except deletion in StudentPanel
+            enableStudentPanelControls(true);
+        } else if ("Employee".equals(userRole)) {
+            // Disable or hide UserPanel for employees
+            //UserPanel.setEnabled(false);
+            //UserPanel.setVisible(false);
+
+            // Disable all CRUD controls in StudentPanel
+            enableStudentPanelControls(false);
+        }
+    }
+
+    private void enableStudentPanelControls(boolean enable) {
+        // Enable or disable all CRUD related buttons and controls in StudentPanel
+        addButton.setEnabled(enable);
+        updateButton.setEnabled(enable);
+        deleteButton.setEnabled(enable);
+        detailButton.setEnabled(enable);
+        findButton.setEnabled(enable);
+        clearButton.setEnabled(enable);
+        importButton.setEnabled(enable);
+        exportButton.setEnabled(enable);
+        // Add similar lines for any other controls that need to be enabled/disabled
     }
 
     /**
@@ -73,27 +124,29 @@ public class Home extends javax.swing.JFrame {
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
-        jPanel3 = new javax.swing.JPanel();
+        StudentPanel = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
-        jButton5 = new javax.swing.JButton();
-        jTextField1 = new javax.swing.JTextField();
-        jTextField2 = new javax.swing.JTextField();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        addButton = new javax.swing.JButton();
+        updateButton = new javax.swing.JButton();
+        detailButton = new javax.swing.JButton();
+        deleteButton = new javax.swing.JButton();
+        clearButton = new javax.swing.JButton();
+        TextStudentName = new javax.swing.JTextField();
+        TextStudentPhoneNum = new javax.swing.JTextField();
+        GenderBox = new javax.swing.JComboBox<>();
         jLabel1 = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         jDateChooser1 = new com.toedter.calendar.JDateChooser();
         jLabel6 = new javax.swing.JLabel();
-        jButton13 = new javax.swing.JButton();
+        findButton = new javax.swing.JButton();
+        jLabel15 = new javax.swing.JLabel();
+        TextEmail = new javax.swing.JTextField();
         jPanel5 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jButton6 = new javax.swing.JButton();
-        jButton7 = new javax.swing.JButton();
-        jPanel7 = new javax.swing.JPanel();
+        StudentTable = new javax.swing.JTable();
+        importButton = new javax.swing.JButton();
+        exportButton = new javax.swing.JButton();
+        UserPanel = new javax.swing.JPanel();
         jPanel8 = new javax.swing.JPanel();
         AddUserBtn = new javax.swing.JButton();
         UpdateUserBtn = new javax.swing.JButton();
@@ -121,6 +174,7 @@ public class Home extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         UserTable = new javax.swing.JTable();
         jButton15 = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
         jPanel6 = new javax.swing.JPanel();
         jPanel11 = new javax.swing.JPanel();
         jLabel14 = new javax.swing.JLabel();
@@ -185,60 +239,70 @@ public class Home extends javax.swing.JFrame {
 
         jTabbedPane2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 16, 245)));
         jTabbedPane2.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        jTabbedPane2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jTabbedPane2MouseClicked(evt);
+            }
+        });
 
-        jPanel3.setBackground(new java.awt.Color(119, 255, 234));
-        jPanel3.setPreferredSize(new java.awt.Dimension(1180, 721));
+        StudentPanel.setBackground(new java.awt.Color(119, 255, 234));
+        StudentPanel.setPreferredSize(new java.awt.Dimension(1180, 721));
 
         jPanel4.setBackground(new java.awt.Color(235, 252, 255));
         jPanel4.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 108, 242), 4, true));
         jPanel4.setMaximumSize(new java.awt.Dimension(340, 600));
         jPanel4.setPreferredSize(new java.awt.Dimension(340, 600));
 
-        jButton1.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton1.setText("Add");
-
-        jButton2.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton2.setText("Update");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
+        addButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        addButton.setText("Add");
+        addButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+                addButtonActionPerformed(evt);
             }
         });
 
-        jButton3.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton3.setText("Detail");
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        updateButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        updateButton.setText("Update");
+        updateButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                updateButtonActionPerformed(evt);
             }
         });
 
-        jButton4.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton4.setText("Delete");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        detailButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        detailButton.setText("Detail");
+        detailButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                detailButtonActionPerformed(evt);
             }
         });
 
-        jButton5.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton5.setText("Clear");
-        jButton5.addActionListener(new java.awt.event.ActionListener() {
+        deleteButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        deleteButton.setText("Delete");
+        deleteButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton5ActionPerformed(evt);
+                deleteButtonActionPerformed(evt);
             }
         });
 
-        jTextField2.addKeyListener(new java.awt.event.KeyAdapter() {
+        clearButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        clearButton.setText("Clear");
+        clearButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearButtonActionPerformed(evt);
+            }
+        });
+
+        TextStudentPhoneNum.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyTyped(java.awt.event.KeyEvent evt) {
-                jTextField2KeyTyped(evt);
+                TextStudentPhoneNumKeyTyped(evt);
             }
         });
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
-        jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+        GenderBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
+        GenderBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox1ActionPerformed(evt);
+                GenderBoxActionPerformed(evt);
             }
         });
 
@@ -246,17 +310,21 @@ public class Home extends javax.swing.JFrame {
 
         jLabel5.setText("Phone Num:");
 
-        jDateChooser1.setDateFormatString("dd/MM/yyyy");
+        jDateChooser1.setDateFormatString("yyyy-MM-dd");
 
         jLabel6.setText("Date of Birth:");
 
-        jButton13.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
-        jButton13.setText("Find");
-        jButton13.addActionListener(new java.awt.event.ActionListener() {
+        findButton.setFont(new java.awt.Font("Times New Roman", 1, 18)); // NOI18N
+        findButton.setText("Find");
+        findButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton13ActionPerformed(evt);
+                findButtonActionPerformed(evt);
             }
         });
+
+        jLabel15.setText("Email:");
+
+        TextEmail.setEditable(false);
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -265,35 +333,39 @@ public class Home extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel4Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel5)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTextField2))
-                    .addGroup(jPanel4Layout.createSequentialGroup()
                         .addGap(28, 28, 28)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(findButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(detailButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(updateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)))
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, 57, Short.MAX_VALUE)
                         .addGap(18, 18, 18)
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(jPanel4Layout.createSequentialGroup()
-                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(GenderBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(149, 149, 149))
-                            .addComponent(jTextField1)))
+                            .addComponent(TextStudentName)))
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addContainerGap()
                         .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel4Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel5)
+                            .addComponent(jLabel15, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(TextStudentPhoneNum)
+                            .addComponent(TextEmail))))
                 .addGap(30, 30, 30))
         );
         jPanel4Layout.setVerticalGroup(
@@ -301,53 +373,62 @@ public class Home extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel4Layout.createSequentialGroup()
                 .addGap(63, 63, 63)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(TextStudentName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1))
                 .addGap(18, 18, 18)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel6))
-                .addGap(33, 33, 33)
+                .addGap(18, 18, 18)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(32, 32, 32)
-                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(TextStudentPhoneNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel15)
+                    .addComponent(TextEmail, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(16, 16, 16)
+                .addComponent(GenderBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(addButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(updateButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(46, 46, 46)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(deleteButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(detailButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(44, 44, 44)
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton13, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(findButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(clearButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(32, 32, 32))
         );
 
         jPanel5.setBackground(new java.awt.Color(218, 239, 228));
         jPanel5.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 255, 249), 3, true));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        StudentTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "ID", "Name", "Date of birth", "Gender", "Phone"
+                "ID", "Name", "Date of birth", "Gender", "Email", "Phone"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
+                false, false, false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane1.setViewportView(jTable1);
+        StudentTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                StudentTableMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(StudentTable);
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -360,51 +441,51 @@ public class Home extends javax.swing.JFrame {
             .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 517, Short.MAX_VALUE)
         );
 
-        jButton6.setBackground(new java.awt.Color(107, 164, 190));
-        jButton6.setText("Import");
-        jButton6.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        importButton.setBackground(new java.awt.Color(107, 164, 190));
+        importButton.setText("Import");
+        importButton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        jButton7.setBackground(new java.awt.Color(107, 164, 190));
-        jButton7.setText("Export");
-        jButton7.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        exportButton.setBackground(new java.awt.Color(107, 164, 190));
+        exportButton.setText("Export");
+        exportButton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        javax.swing.GroupLayout StudentPanelLayout = new javax.swing.GroupLayout(StudentPanel);
+        StudentPanel.setLayout(StudentPanelLayout);
+        StudentPanelLayout.setHorizontalGroup(
+            StudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(StudentPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(StudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
+                    .addGroup(StudentPanelLayout.createSequentialGroup()
                         .addGap(8, 8, 8)
-                        .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(86, 86, 86)
-                        .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+        StudentPanelLayout.setVerticalGroup(
+            StudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(StudentPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(StudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, 574, Short.MAX_VALUE)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
+                    .addGroup(StudentPanelLayout.createSequentialGroup()
                         .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jButton7, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addGroup(StudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(importButton, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(exportButton, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(31, Short.MAX_VALUE))
         );
 
-        jTabbedPane2.addTab("Student", jPanel3);
+        jTabbedPane2.addTab("Student", StudentPanel);
 
-        jPanel7.setBackground(new java.awt.Color(119, 255, 234));
-        jPanel7.setPreferredSize(new java.awt.Dimension(1180, 721));
+        UserPanel.setBackground(new java.awt.Color(119, 255, 234));
+        UserPanel.setPreferredSize(new java.awt.Dimension(1180, 721));
 
         jPanel8.setBackground(new java.awt.Color(235, 252, 255));
         jPanel8.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 108, 242), 4, true));
@@ -649,34 +730,49 @@ public class Home extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
+        jButton1.setText("Show table");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout UserPanelLayout = new javax.swing.GroupLayout(UserPanel);
+        UserPanel.setLayout(UserPanelLayout);
+        UserPanelLayout.setHorizontalGroup(
+            UserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(UserPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(jPanel7Layout.createSequentialGroup()
+                .addGroup(UserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(UserPanelLayout.createSequentialGroup()
+                        .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(UserPanelLayout.createSequentialGroup()
                         .addComponent(jButton15, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1)
+                        .addGap(165, 165, 165))))
         );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
+        UserPanelLayout.setVerticalGroup(
+            UserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(UserPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(UserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, 523, Short.MAX_VALUE)
                     .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addComponent(jButton15, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(UserPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(UserPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(jButton15, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(UserPanelLayout.createSequentialGroup()
+                        .addGap(1, 1, 1)
+                        .addComponent(jButton1)))
                 .addContainerGap(28, Short.MAX_VALUE))
         );
 
-        jTabbedPane2.addTab("User", jPanel7);
+        jTabbedPane2.addTab("User", UserPanel);
 
         jPanel11.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 8, 228), 2));
 
@@ -691,7 +787,12 @@ public class Home extends javax.swing.JFrame {
             .addComponent(jLabel14, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
 
-        SettingBtn.setText("Setting");
+        SettingBtn.setText("Change profile picture");
+        SettingBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SettingBtnActionPerformed(evt);
+            }
+        });
 
         LogoutBtn.setText("Log out");
         LogoutBtn.addActionListener(new java.awt.event.ActionListener() {
@@ -705,11 +806,11 @@ public class Home extends javax.swing.JFrame {
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel6Layout.createSequentialGroup()
-                .addContainerGap(759, Short.MAX_VALUE)
+                .addContainerGap(683, Short.MAX_VALUE)
                 .addComponent(jPanel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(36, 36, 36)
-                .addComponent(SettingBtn)
-                .addGap(49, 49, 49)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(SettingBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(140, 140, 140)
                 .addComponent(LogoutBtn)
                 .addGap(27, 27, 27))
         );
@@ -770,21 +871,126 @@ public class Home extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton2ActionPerformed
+        try {
+            if (selectedStudentId == -1) {
+                JOptionPane.showMessageDialog(this, "No student selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton3ActionPerformed
+            String name = TextStudentName.getText().trim();
+            LocalDate dob = convertToLocalDateViaInstant(jDateChooser1.getDate());
+            String gender = GenderBox.getSelectedItem().toString();
+            String phoneNumber = TextStudentPhoneNum.getText().trim();
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton4ActionPerformed
+            StudentService studentService = new StudentService();
+            String email = studentService.getStudentEmail(selectedStudentId);
 
-    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+            Student student = new Student(selectedStudentId, name, dob, gender, phoneNumber, email);
+
+            boolean isUpdated = studentService.updateStudent(student);
+
+            if (isUpdated) {
+                JOptionPane.showMessageDialog(this, "Student updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                tableViewStudent(); // Refresh your table to show updated data
+                clearFields(); // Clear input fields
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to update student.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+    }//GEN-LAST:event_updateButtonActionPerformed
+
+    private void detailButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton5ActionPerformed
+    }//GEN-LAST:event_detailButtonActionPerformed
+
+    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
+        // TODO add your handling code here:
+        try {
+            if (selectedStudentId == -1) {
+                JOptionPane.showMessageDialog(this, "No student selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to delete this student?",
+                    "Confirm Deletion",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                StudentService studentService = new StudentService();
+                boolean isDeleted = studentService.deleteStudent(selectedStudentId);
+
+                if (isDeleted) {
+                    JOptionPane.showMessageDialog(this, "Student deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    tableViewStudent(); 
+                    clearFields(); 
+                    selectedStudentId = -1;
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete student.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_deleteButtonActionPerformed
+
+    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearButtonActionPerformed
+        // TODO add your handling code here:
+        clearFields();
+    }//GEN-LAST:event_clearButtonActionPerformed
+
+    private void clearFields() {
+        TextStudentName.setText("");
+        jDateChooser1.setDate(null);
+        TextStudentPhoneNum.setText("");
+        GenderBox.setSelectedIndex(0);
+        TextEmail.setText("");
+    }
+
+    public DefaultTableModel getStudentData() {
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Name", "Date of Birth", "Gender", "Email", "Phone"}, 0);
+
+        String sql = "SELECT student_id, name, date_of_birth, gender, email,phone_number FROM students";
+        try (Connection conn = DbConnection.getConnection(); PreparedStatement pst = conn.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                Object[] row = new Object[]{
+                    rs.getInt("student_id"),
+                    rs.getString("name"),
+                    rs.getDate("date_of_birth").toString(), // Assuming date_of_birth is stored as a SQL DATE
+                    rs.getString("gender"),
+                    rs.getString("email"),
+                    rs.getString("phone_number"),
+                };
+                model.addRow(row);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+        }
+
+        return model;
+    }
+
+    private void tableViewStudent() {
+        StudentTable.setRowHeight(30);
+        StudentTable.setShowGrid(true);
+        StudentTable.setGridColor(Color.black);
+        StudentTable.setBackground(Color.white);
+
+        // Fetch and populate data
+        DefaultTableModel dataModel = getStudentData();
+        StudentTable.setModel(dataModel);
+
+        // Additional configuration for StudentTable if needed
+    }
+
 
     private void UpdateUserBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_UpdateUserBtnActionPerformed
         // TODO add your handling code here:
@@ -819,6 +1025,19 @@ public class Home extends javax.swing.JFrame {
 
     private void HistoryBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HistoryBtnActionPerformed
         // TODO add your handling code here:
+        int selectedRow = UserTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a user to view history.", "No User Selected", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) UserTable.getModel();
+        int userId = (Integer) model.getValueAt(selectedRow, 0); // Assuming the ID is in the first column
+        String userName = model.getValueAt(selectedRow, 1).toString(); // Adjust the index if the name is in a different column
+
+        // Open the LoginHistory form and pass the selected user's details
+        LoginHistory loginHistoryForm = new LoginHistory(userId, userName);
+        loginHistoryForm.setVisible(true);
     }//GEN-LAST:event_HistoryBtnActionPerformed
 
     private void DeleteUserBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DeleteUserBtnActionPerformed
@@ -846,17 +1065,17 @@ public class Home extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_DeleteUserBtnActionPerformed
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
+    private void GenderBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenderBoxActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jComboBox1ActionPerformed
+    }//GEN-LAST:event_GenderBoxActionPerformed
 
     private void TextNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TextNameActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_TextNameActionPerformed
 
-    private void jButton13ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton13ActionPerformed
+    private void findButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_findButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton13ActionPerformed
+    }//GEN-LAST:event_findButtonActionPerformed
 
     public int getUserId(String username) {
         Connection conn = null;
@@ -961,7 +1180,7 @@ public class Home extends javax.swing.JFrame {
         return model;
     }
 
-    private void tableViewStudent() {
+    private void tableViewUser() {
 
         // Set visual properties of the table
         UserTable.setRowHeight(30);
@@ -1060,12 +1279,12 @@ public class Home extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_TextUserPhoneNumKeyTyped
 
-    private void jTextField2KeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField2KeyTyped
+    private void TextStudentPhoneNumKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_TextStudentPhoneNumKeyTyped
         // TODO add your handling code here:
         if (!Character.isDigit(evt.getKeyChar())) {
             evt.consume();
         }
-    }//GEN-LAST:event_jTextField2KeyTyped
+    }//GEN-LAST:event_TextStudentPhoneNumKeyTyped
     File selectedImageFile;
     private void BrowseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BrowseBtnActionPerformed
         // TODO add your handling code here:
@@ -1116,6 +1335,144 @@ public class Home extends javax.swing.JFrame {
             }
         }
     }//GEN-LAST:event_UserTableMouseClicked
+
+    private void SettingBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SettingBtnActionPerformed
+        // TODO add your handling code here:
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a Profile Picture");
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Image files", "jpg", "png", "jpeg", "gif", "bmp");
+        fileChooser.addChoosableFileFilter(filter);
+
+        int option = fileChooser.showOpenDialog(this);
+        if (option == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            // Process and update the profile picture
+            processAndUpdateProfilePicture(selectedFile);
+        }
+    }//GEN-LAST:event_SettingBtnActionPerformed
+
+    private void jTabbedPane2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jTabbedPane2MouseClicked
+        // TODO add your handling code here:
+        // Assuming the UserPanel is at a specific index, e.g., 1
+        int userPanelTabIndex = 1;
+
+        // Check if the selected tab is the UserPanel
+        if (jTabbedPane2.getSelectedIndex() == userPanelTabIndex) {
+            if (!"Admin".equals(userRole)) {
+                JOptionPane.showMessageDialog(this, "Access denied. Only Admins can access this panel.", "Access Denied", JOptionPane.ERROR_MESSAGE);
+
+                // Optionally, switch back to another tab, e.g., the first tab
+                jTabbedPane2.setSelectedIndex(0);
+            }
+        }
+    }//GEN-LAST:event_jTabbedPane2MouseClicked
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        tableViewUser();
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private String generateEmail(String phoneNumber, String name) {
+        String firstWordOfName = name.contains(" ") ? name.substring(0, name.indexOf(" ")) : name;
+        firstWordOfName = firstWordOfName.toLowerCase();
+
+        return phoneNumber + "_" + firstWordOfName + "@student.com";
+    }
+
+    private LocalDate convertToLocalDateViaInstant(java.util.Date dateToConvert) {
+        return dateToConvert.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
+
+    private java.util.Date convertToDate(LocalDate localDate) {
+        return java.util.Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+
+    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addButtonActionPerformed
+        // TODO add your handling code here:
+        try {
+            String name = TextStudentName.getText().trim();
+            LocalDate dob = convertToLocalDateViaInstant(jDateChooser1.getDate());
+            String gender = GenderBox.getSelectedItem().toString();
+            String phoneNumber = TextStudentPhoneNum.getText().trim();
+
+            // Validate inputs (optional, based on your requirements)
+            if (name.isEmpty() || phoneNumber.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Name and phone number are required.", "Input Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            String email = generateEmail(phoneNumber, name);
+            Student student = new Student(0, name, dob, gender, phoneNumber, email); // Assuming 0 for studentId as it is auto-generated
+
+            StudentService studentService = new StudentService();
+            boolean isAdded = studentService.addStudent(student);
+
+            if (isAdded) {
+                JOptionPane.showMessageDialog(this, "Student added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                tableViewStudent();
+                clearFields();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to add student.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_addButtonActionPerformed
+
+    private void StudentTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_StudentTableMouseClicked
+        // TODO add your handling code here:
+        int row = StudentTable.getSelectedRow();
+        DefaultTableModel model = (DefaultTableModel) StudentTable.getModel();
+
+        if (row >= 0) {
+            selectedStudentId = Integer.parseInt(model.getValueAt(row, 0).toString());
+            String name = model.getValueAt(row, 1).toString();
+            String dobStr = model.getValueAt(row, 2).toString(); // Date as String in yyyy-MM-dd format
+            String email = model.getValueAt(row, 4).toString();
+            String phoneNumber = model.getValueAt(row, 5).toString();
+            String gender = model.getValueAt(row, 3).toString();
+
+            TextStudentName.setText(name);
+            TextStudentPhoneNum.setText(phoneNumber);
+            GenderBox.setSelectedItem(gender);
+            TextEmail.setText(email);
+
+            try {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate dob = LocalDate.parse(dobStr, formatter);
+                java.util.Date date = java.util.Date.from(dob.atStartOfDay(ZoneId.systemDefault()).toInstant());
+                jDateChooser1.setDate(date);
+            } catch (DateTimeParseException e) {
+                e.printStackTrace();
+                // Handle exception, notify user of incorrect date format
+            }
+        }
+    }//GEN-LAST:event_StudentTableMouseClicked
+
+    private void processAndUpdateProfilePicture(File selectedFile) {
+        try {
+            byte[] imageBytes = convertImageToByteArray(selectedFile);
+            UserService userService = new UserService();
+            if (userService.updateProfilePicture(currentUserId, imageBytes)) {
+
+                ImageIcon imageIcon = new ImageIcon(imageBytes);
+                Image image = imageIcon.getImage().getScaledInstance(jLabel14.getWidth(), jLabel14.getHeight(), Image.SCALE_SMOOTH);
+                jLabel14.setIcon(new ImageIcon(image));
+
+                JOptionPane.showMessageDialog(this, "Profile picture updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to update profile picture.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this, "Error processing image file.", "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
     public byte[] convertImageToByteArray(File file) throws IOException {
         BufferedImage bImage = ImageIO.read(file);
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -1185,28 +1542,34 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JButton AddUserBtn;
     private javax.swing.JButton BrowseBtn;
     private javax.swing.JButton DeleteUserBtn;
+    private javax.swing.JComboBox<String> GenderBox;
     private javax.swing.JButton HistoryBtn;
     private javax.swing.JButton LogoutBtn;
     private javax.swing.JComboBox<String> RoleBox;
     private javax.swing.JButton SettingBtn;
     private javax.swing.JComboBox<String> StatusBox;
+    private javax.swing.JPanel StudentPanel;
+    private javax.swing.JTable StudentTable;
+    private javax.swing.JTextField TextEmail;
     private javax.swing.JTextField TextName;
     private javax.swing.JPasswordField TextPassword;
+    private javax.swing.JTextField TextStudentName;
+    private javax.swing.JTextField TextStudentPhoneNum;
     private javax.swing.JTextField TextUserPhoneNum;
     private javax.swing.JTextField TextUsername;
     private javax.swing.JButton UpdateUserBtn;
+    private javax.swing.JPanel UserPanel;
     private javax.swing.JTable UserTable;
+    private javax.swing.JButton addButton;
+    private javax.swing.JButton clearButton;
+    private javax.swing.JButton deleteButton;
+    private javax.swing.JButton detailButton;
+    private javax.swing.JButton exportButton;
+    private javax.swing.JButton findButton;
     private javax.swing.JLabel imageLabel;
+    private javax.swing.JButton importButton;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton13;
     private javax.swing.JButton jButton15;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private javax.swing.JButton jButton5;
-    private javax.swing.JButton jButton6;
-    private javax.swing.JButton jButton7;
-    private javax.swing.JComboBox<String> jComboBox1;
     private com.toedter.calendar.JDateChooser jDateChooser1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
@@ -1214,6 +1577,7 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
+    private javax.swing.JLabel jLabel15;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1227,19 +1591,15 @@ public class Home extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JSpinner jSpinner1;
     private javax.swing.JTabbedPane jTabbedPane2;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
+    private javax.swing.JButton updateButton;
     // End of variables declaration//GEN-END:variables
 }
