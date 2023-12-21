@@ -4,6 +4,16 @@
  */
 package studentmanament;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.List;
+import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
+import studentmanament.entity.Certificate;
+import studentmanament.service.CertificateService;
+
 /**
  *
  * @author ACER
@@ -17,6 +27,18 @@ public class StudentDetail extends javax.swing.JFrame {
         initComponents();
     }
 
+    int studentId;
+    int selectedCertificateId;
+
+    public void displayStudentInfo(int studentId, String studentName) {
+        
+        TextDetailID.setText(String.valueOf(studentId));
+        TextDetailName.setText(studentName);
+        displayCertificates(studentId);
+        this.studentId = studentId;
+        displayStudentDetails(studentId);
+    }
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -28,33 +50,33 @@ public class StudentDetail extends javax.swing.JFrame {
 
         jPanel1 = new javax.swing.JPanel();
         jPanel5 = new javax.swing.JPanel();
-        jTextField3 = new javax.swing.JTextField();
-        jTextField4 = new javax.swing.JTextField();
-        jTextField5 = new javax.swing.JTextField();
-        jTextField6 = new javax.swing.JTextField();
+        TextDetailName = new javax.swing.JTextField();
+        TextNoCertificates = new javax.swing.JTextField();
+        TextDetailID = new javax.swing.JTextField();
         jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jLabel8 = new javax.swing.JLabel();
         jPanel6 = new javax.swing.JPanel();
-        jButton1 = new javax.swing.JButton();
+        ButtonAddCertificate = new javax.swing.JButton();
         CloseBtn = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        ButtonEditCertificate = new javax.swing.JButton();
+        ButtonDeleteCertificate = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
-        jTextField1 = new javax.swing.JTextField();
+        TextTitle = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jLabel2 = new javax.swing.JLabel();
-        jDateChooser1 = new com.toedter.calendar.JDateChooser();
+        jDateChooserIssueDate = new com.toedter.calendar.JDateChooser();
         jLabel3 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         jTextArea1 = new javax.swing.JTextArea();
         jLabel4 = new javax.swing.JLabel();
+        jLabel6 = new javax.swing.JLabel();
+        jDateChooserExpiryDate = new com.toedter.calendar.JDateChooser();
+        jButton1 = new javax.swing.JButton();
+        jButton2 = new javax.swing.JButton();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        CertificateTable = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setUndecorated(true);
@@ -75,24 +97,20 @@ public class StudentDetail extends javax.swing.JFrame {
         jPanel5.setBackground(new java.awt.Color(170, 193, 252));
         jPanel5.setBorder(javax.swing.BorderFactory.createEtchedBorder(javax.swing.border.EtchedBorder.RAISED, new java.awt.Color(255, 183, 238), new java.awt.Color(124, 27, 189)));
 
-        jTextField3.setEditable(false);
+        TextDetailName.setEditable(false);
 
-        jTextField4.setEditable(false);
-
-        jTextField5.setEditable(false);
-        jTextField5.addActionListener(new java.awt.event.ActionListener() {
+        TextNoCertificates.setEditable(false);
+        TextNoCertificates.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jTextField5ActionPerformed(evt);
+                TextNoCertificatesActionPerformed(evt);
             }
         });
 
-        jTextField6.setEditable(false);
+        TextDetailID.setEditable(false);
 
         jLabel5.setText("Full name");
 
-        jLabel6.setText("Date of birth");
-
-        jLabel7.setText("Phone Num:");
+        jLabel7.setText("ID");
 
         jLabel8.setText("Num of Certificates");
 
@@ -102,23 +120,19 @@ public class StudentDetail extends javax.swing.JFrame {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(TextDetailName, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(38, 38, 38)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 76, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(TextDetailID, javax.swing.GroupLayout.PREFERRED_SIZE, 135, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(jLabel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(TextNoCertificates, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(85, 85, 85)))
                 .addGap(42, 42, 42))
         );
@@ -127,23 +141,26 @@ public class StudentDetail extends javax.swing.JFrame {
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addGap(14, 14, 14)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(TextDetailName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(TextDetailID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel5)
                     .addComponent(jLabel7))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 33, Short.MAX_VALUE)
                 .addGroup(jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jTextField5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel6)
+                    .addComponent(TextNoCertificates, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel8))
                 .addGap(22, 22, 22))
         );
 
         jPanel6.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        jButton1.setBackground(new java.awt.Color(255, 181, 137));
-        jButton1.setText("Add");
+        ButtonAddCertificate.setBackground(new java.awt.Color(255, 181, 137));
+        ButtonAddCertificate.setText("Add");
+        ButtonAddCertificate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonAddCertificateActionPerformed(evt);
+            }
+        });
 
         CloseBtn.setBackground(new java.awt.Color(255, 181, 137));
         CloseBtn.setText("Close");
@@ -153,14 +170,19 @@ public class StudentDetail extends javax.swing.JFrame {
             }
         });
 
-        jButton3.setBackground(new java.awt.Color(255, 181, 137));
-        jButton3.setText("Edit");
-
-        jButton4.setBackground(new java.awt.Color(255, 181, 137));
-        jButton4.setText("Delete");
-        jButton4.addActionListener(new java.awt.event.ActionListener() {
+        ButtonEditCertificate.setBackground(new java.awt.Color(255, 181, 137));
+        ButtonEditCertificate.setText("Update");
+        ButtonEditCertificate.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton4ActionPerformed(evt);
+                ButtonEditCertificateActionPerformed(evt);
+            }
+        });
+
+        ButtonDeleteCertificate.setBackground(new java.awt.Color(255, 181, 137));
+        ButtonDeleteCertificate.setText("Delete");
+        ButtonDeleteCertificate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ButtonDeleteCertificateActionPerformed(evt);
             }
         });
 
@@ -171,12 +193,12 @@ public class StudentDetail extends javax.swing.JFrame {
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ButtonEditCertificate, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ButtonAddCertificate, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 87, Short.MAX_VALUE)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(CloseBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ButtonDeleteCertificate, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(30, 30, 30))
         );
         jPanel6Layout.setVerticalGroup(
@@ -184,12 +206,12 @@ public class StudentDetail extends javax.swing.JFrame {
             .addGroup(jPanel6Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ButtonAddCertificate, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(CloseBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ButtonEditCertificate, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ButtonDeleteCertificate, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(11, Short.MAX_VALUE))
         );
 
@@ -220,9 +242,7 @@ public class StudentDetail extends javax.swing.JFrame {
 
         jLabel1.setText("Title");
 
-        jLabel2.setText("Organization");
-
-        jDateChooser1.setDateFormatString("dd/MM/yyyy");
+        jDateChooserIssueDate.setDateFormatString("MM-dd-yyyy");
 
         jLabel3.setText("Issue date");
 
@@ -232,56 +252,80 @@ public class StudentDetail extends javax.swing.JFrame {
 
         jLabel4.setText("Detail");
 
+        jLabel6.setText("Expire date");
+
+        jDateChooserExpiryDate.setDateFormatString("MM-dd-yyyy");
+
+        jButton1.setText("Refresh");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        jButton2.setText("Clear ");
+        jButton2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton2ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel3Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jButton1))
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
                         .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton2))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane2)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 89, Short.MAX_VALUE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGap(53, 53, 53)
-                                .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(14, 14, 14))))
+                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jDateChooserExpiryDate, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(TextTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(53, 53, 53)
+                        .addComponent(jDateChooserIssueDate, javax.swing.GroupLayout.PREFERRED_SIZE, 126, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(14, 14, 14))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(14, 14, 14)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(TextTitle, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel1))
                 .addGap(27, 27, 27)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jDateChooser1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jDateChooserIssueDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel3))
-                .addGap(27, 27, 27)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel2))
-                .addGap(64, 64, 64)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel6)
+                    .addComponent(jDateChooserExpiryDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(41, 41, 41)
+                .addComponent(jButton1)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(jButton2))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        CertificateTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null},
                 {null, null, null, null, null},
@@ -292,9 +336,14 @@ public class StudentDetail extends javax.swing.JFrame {
                 "ID", "Title", "Issue date", "org", "Description"
             }
         ));
-        jScrollPane1.setViewportView(jTable1);
-        if (jTable1.getColumnModel().getColumnCount() > 0) {
-            jTable1.getColumnModel().getColumn(0).setResizable(false);
+        CertificateTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                CertificateTableMouseClicked(evt);
+            }
+        });
+        jScrollPane1.setViewportView(CertificateTable);
+        if (CertificateTable.getColumnModel().getColumnCount() > 0) {
+            CertificateTable.getColumnModel().getColumn(0).setResizable(false);
         }
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
@@ -344,13 +393,45 @@ public class StudentDetail extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jTextField5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField5ActionPerformed
+    private void TextNoCertificatesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TextNoCertificatesActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jTextField5ActionPerformed
+    }//GEN-LAST:event_TextNoCertificatesActionPerformed
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton4ActionPerformed
+    private void displayStudentDetails(int studentId) {
+        CertificateService certificateService = new CertificateService();
+        int certificateCount = certificateService.countCertificatesForStudent(studentId);
+        TextNoCertificates.setText(String.valueOf(certificateCount));
+    }
+
+
+    private void ButtonDeleteCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonDeleteCertificateActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jButton4ActionPerformed
+        // Check if a certificate is selected
+        if (selectedCertificateId == -1) {
+            JOptionPane.showMessageDialog(this, "No certificate selected.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Confirm deletion
+        int confirm = JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this certificate?", "Confirm Deletion", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                CertificateService certificateService = new CertificateService();
+                boolean isDeleted = certificateService.deleteCertificate(selectedCertificateId);
+
+                if (isDeleted) {
+                    JOptionPane.showMessageDialog(this, "Certificate deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    // Refresh the certificate table
+                    displayCertificates(this.studentId);
+                    displayStudentDetails(this.studentId);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to delete certificate.", "Database Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_ButtonDeleteCertificateActionPerformed
 
     private void CloseBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CloseBtnActionPerformed
         // TODO add your handling code here:
@@ -364,11 +445,134 @@ public class StudentDetail extends javax.swing.JFrame {
     }//GEN-LAST:event_formMousePressed
 
     private void formMouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_formMouseDragged
-            // TODO add your handling code here:
-            int x = evt.getXOnScreen();
-            int y = evt.getYOnScreen();
-            this.setLocation(x-xx,y-xy);
+        // TODO add your handling code here:
+        int x = evt.getXOnScreen();
+        int y = evt.getYOnScreen();
+        this.setLocation(x - xx, y - xy);
     }//GEN-LAST:event_formMouseDragged
+
+    private void ButtonAddCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonAddCertificateActionPerformed
+        // TODO add your handling code here:
+        try {
+            String certificateName = TextTitle.getText().trim();
+            LocalDate issueDate = convertToLocalDateViaInstant(jDateChooserIssueDate.getDate());
+            LocalDate expiryDate = convertToLocalDateViaInstant(jDateChooserExpiryDate.getDate());
+            String details = jTextArea1.getText().trim();
+
+            // Use the class member variable 'studentId' directly
+            // Ensure that 'studentId' is properly set in the 'displayStudentInfo' method beforehand
+            if (this.studentId <= 0) {
+                JOptionPane.showMessageDialog(this, "No student selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (expiryDate != null && issueDate != null && expiryDate.isBefore(issueDate)) {
+                JOptionPane.showMessageDialog(this, "Expiry date cannot be before the issue date.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Certificate newCertificate = new Certificate(0, this.studentId, certificateName, issueDate, expiryDate, details);
+
+            // Add the certificate to the database
+            CertificateService certificateService = new CertificateService();
+            boolean isAdded = certificateService.addCertificate(newCertificate);
+
+            if (isAdded) {
+                JOptionPane.showMessageDialog(this, "Certificate added successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                // Optionally, update the certificate table to show the new certificate
+                displayCertificates(this.studentId);
+                displayStudentDetails(this.studentId);
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to add certificate.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_ButtonAddCertificateActionPerformed
+
+    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+        // TODO add your handling code here:
+        jTextArea1.setText("");
+    }//GEN-LAST:event_jButton2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        TextTitle.setText("");
+        jDateChooserIssueDate.setDate(null);
+        jDateChooserExpiryDate.setDate(null);
+        jTextArea1.setText("");
+        displayCertificates(studentId);
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void CertificateTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_CertificateTableMouseClicked
+        // TODO add your handling code here:
+        int row = CertificateTable.getSelectedRow();
+        if (row >= 0) {
+            DefaultTableModel model = (DefaultTableModel) CertificateTable.getModel();
+
+            // Retrieve data from the selected row
+            // Assuming column indices: 0 = Certificate ID, 1 = Title, 2 = Issue Date, etc.
+            int certificateId = Integer.parseInt(model.getValueAt(row, 0).toString());
+            String title = model.getValueAt(row, 1).toString();
+            String issueDateStr = model.getValueAt(row, 2).toString(); // as 'yyyy-MM-dd'
+            String expiryDateStr = model.getValueAt(row, 3).toString(); // as 'yyyy-MM-dd'
+            String details = model.getValueAt(row, 4).toString();
+
+            // Set the retrieved data to the respective fields
+            TextTitle.setText(title);
+            jTextArea1.setText(details);
+
+            // Convert String to LocalDate for the date choosers
+            LocalDate issueDate = LocalDate.parse(issueDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            LocalDate expiryDate = LocalDate.parse(expiryDateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            jDateChooserIssueDate.setDate(java.sql.Date.valueOf(issueDate));
+            jDateChooserExpiryDate.setDate(java.sql.Date.valueOf(expiryDate));
+
+            // Store the selected certificate ID if needed for further operations like edit or delete
+            selectedCertificateId = certificateId;
+        }
+    }//GEN-LAST:event_CertificateTableMouseClicked
+
+    private void ButtonEditCertificateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ButtonEditCertificateActionPerformed
+        // TODO add your handling code here:
+        if (selectedCertificateId == -1) {
+            JOptionPane.showMessageDialog(this, "No certificate selected.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            String certificateName = TextTitle.getText().trim();
+            LocalDate issueDate = convertToLocalDateViaInstant(jDateChooserIssueDate.getDate());
+            LocalDate expiryDate = convertToLocalDateViaInstant(jDateChooserExpiryDate.getDate());
+            String details = jTextArea1.getText().trim();
+
+            // Check if expiryDate is before issueDate
+            if (expiryDate != null && issueDate != null && expiryDate.isBefore(issueDate)) {
+                JOptionPane.showMessageDialog(this, "Expiry date cannot be before the issue date.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            Certificate updatedCertificate = new Certificate(selectedCertificateId, this.studentId, certificateName, issueDate, expiryDate, details);
+
+            CertificateService certificateService = new CertificateService();
+            boolean isUpdated = certificateService.updateCertificate(updatedCertificate);
+
+            if (isUpdated) {
+                JOptionPane.showMessageDialog(this, "Certificate updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                displayCertificates(this.studentId); // Refresh the certificate table
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to update certificate.", "Database Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_ButtonEditCertificateActionPerformed
+
+    private LocalDate convertToLocalDateViaInstant(Date dateToConvert) {
+        return dateToConvert.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
 
     /**
      * @param args the command line arguments
@@ -405,14 +609,39 @@ public class StudentDetail extends javax.swing.JFrame {
         });
     }
 
+    private void displayCertificates(int studentId) {
+        CertificateService certificateService = new CertificateService();
+        List<Certificate> certificates = certificateService.getCertificatesForStudent(studentId);
+        DefaultTableModel model = (DefaultTableModel) CertificateTable.getModel();
+        model.setRowCount(0); // Clear existing data
+
+        for (Certificate certificate : certificates) {
+            model.addRow(new Object[]{
+                certificate.getCertificateId(),
+                certificate.getCertificateName(),
+                certificate.getIssueDate().toString(),
+                certificate.getExpiryDate() != null ? certificate.getExpiryDate().toString() : "",
+                certificate.getDetails()
+            });
+        }
+    }
+
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton ButtonAddCertificate;
+    private javax.swing.JButton ButtonDeleteCertificate;
+    private javax.swing.JButton ButtonEditCertificate;
+    private javax.swing.JTable CertificateTable;
     private javax.swing.JButton CloseBtn;
+    private javax.swing.JTextField TextDetailID;
+    private javax.swing.JTextField TextDetailName;
+    private javax.swing.JTextField TextNoCertificates;
+    private javax.swing.JTextField TextTitle;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
-    private com.toedter.calendar.JDateChooser jDateChooser1;
+    private javax.swing.JButton jButton2;
+    private com.toedter.calendar.JDateChooser jDateChooserExpiryDate;
+    private com.toedter.calendar.JDateChooser jDateChooserIssueDate;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -427,13 +656,6 @@ public class StudentDetail extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel6;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable jTable1;
     private javax.swing.JTextArea jTextArea1;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
-    private javax.swing.JTextField jTextField4;
-    private javax.swing.JTextField jTextField5;
-    private javax.swing.JTextField jTextField6;
     // End of variables declaration//GEN-END:variables
 }
