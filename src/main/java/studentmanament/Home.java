@@ -904,8 +904,27 @@ public class Home extends javax.swing.JFrame {
 
     }//GEN-LAST:event_updateButtonActionPerformed
 
+    private void openStudentDetailForm(int studentId, String studentName) {
+        StudentDetail studentDetailForm = new StudentDetail();
+        studentDetailForm.displayStudentInfo(studentId, studentName);
+        studentDetailForm.setVisible(true);
+    }
+
+
     private void detailButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_detailButtonActionPerformed
         // TODO add your handling code here:
+        int row = StudentTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a student first.", "No Selection", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        DefaultTableModel model = (DefaultTableModel) StudentTable.getModel();
+        int studentId = Integer.parseInt(model.getValueAt(row, 0).toString()); // Assuming 0 is the column for student ID
+        String studentName = model.getValueAt(row, 1).toString(); // Assuming 1 is the column for student name
+
+        // Open the StudentDetail form and pass the data
+        openStudentDetailForm(studentId, studentName);
     }//GEN-LAST:event_detailButtonActionPerformed
 
     private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteButtonActionPerformed
@@ -928,8 +947,8 @@ public class Home extends javax.swing.JFrame {
 
                 if (isDeleted) {
                     JOptionPane.showMessageDialog(this, "Student deleted successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                    tableViewStudent(); 
-                    clearFields(); 
+                    tableViewStudent();
+                    clearFields();
                     selectedStudentId = -1;
                 } else {
                     JOptionPane.showMessageDialog(this, "Failed to delete student.", "Database Error", JOptionPane.ERROR_MESSAGE);
@@ -966,8 +985,7 @@ public class Home extends javax.swing.JFrame {
                     rs.getDate("date_of_birth").toString(), // Assuming date_of_birth is stored as a SQL DATE
                     rs.getString("gender"),
                     rs.getString("email"),
-                    rs.getString("phone_number"),
-                };
+                    rs.getString("phone_number"),};
                 model.addRow(row);
             }
         } catch (SQLException e) {

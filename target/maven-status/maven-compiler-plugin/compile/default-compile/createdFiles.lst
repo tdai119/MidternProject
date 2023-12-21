@@ -2,7 +2,9 @@ studentmanament\Home$10.class
 studentmanament\Home$20.class
 studentmanament\Home$17.class
 studentmanament\Home$27.class
+studentmanament\StudentDetail$9.class
 studentmanament\Login$2.class
+studentmanament\StudentDetail$11.class
 studentmanament\Home$8.class
 studentmanament\Home$23.class
 studentmanament\StudentDetail$6.class
@@ -14,11 +16,13 @@ studentmanament\Home$2.class
 studentmanament\Home$9.class
 studentmanament\StudentDetail.class
 studentmanament\Home$21.class
+studentmanament\StudentDetail$8.class
 studentmanament\Home$16.class
 studentmanament\service\UserService.class
 studentmanament\Home$19.class
 studentmanament\Home$5.class
 studentmanament\Login$5.class
+studentmanament\StudentDetail$10.class
 studentmanament\StudentDetail$2.class
 studentmanament\Login$8.class
 studentmanament\LoginHistory$2.class
@@ -34,6 +38,7 @@ studentmanament\Login.class
 studentmanament\Home$12.class
 studentmanament\service\StudentService.class
 studentmanament\Home$22.class
+studentmanament\entity\Certificate.class
 studentmanament\Home.class
 studentmanament\Home$18.class
 studentmanament\Home$6.class
@@ -47,8 +52,10 @@ studentmanament\Home$7.class
 studentmanament\LoginHistory$3.class
 studentmanament\StudentDetail$3.class
 studentmanament\Login$6.class
+studentmanament\service\CertificateService.class
 studentmanament\LoginHistory.class
 studentmanament\DbConnection.class
+studentmanament\StudentDetail$7.class
 studentmanament\Login$3.class
 studentmanament\entity\LoginRecord.class
 studentmanament\entity\User.class
