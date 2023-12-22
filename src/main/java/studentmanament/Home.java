@@ -7,8 +7,11 @@ package studentmanament;
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -25,6 +28,11 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.mindrot.jbcrypt.BCrypt;
 import studentmanament.entity.Student;
 import studentmanament.entity.User;
@@ -543,10 +551,20 @@ public class Home extends javax.swing.JFrame {
         importButton.setBackground(new java.awt.Color(107, 164, 190));
         importButton.setText("Import");
         importButton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        importButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                importButtonActionPerformed(evt);
+            }
+        });
 
         exportButton.setBackground(new java.awt.Color(107, 164, 190));
         exportButton.setText("Export");
         exportButton.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+        exportButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exportButtonActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout StudentPanelLayout = new javax.swing.GroupLayout(StudentPanel);
         StudentPanel.setLayout(StudentPanelLayout);
@@ -1623,6 +1641,111 @@ public class Home extends javax.swing.JFrame {
     private void GenderBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GenderBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_GenderBox1ActionPerformed
+
+    private void importButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_importButtonActionPerformed
+        // TODO add your handling code here:
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a file to import");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Text Files", "txt"));
+
+        int userSelection = fileChooser.showOpenDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToOpen = fileChooser.getSelectedFile();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileToOpen))) {
+                String line;
+                StudentService studentService = new StudentService();
+                int importedCount = 0;
+
+                while ((line = reader.readLine()) != null) {
+                    String[] data = line.split(","); 
+
+                    // Parse data and create Student object
+                    String name = data[0];
+                    LocalDate dateOfBirth = LocalDate.parse(data[1]); 
+                    String gender = data[2];
+                    String phone = data[3];
+                    String email = data[4];
+
+                    Student student = new Student(0, name, dateOfBirth, gender, phone, email); 
+
+                    if (studentService.addStudent(student)) {
+                        importedCount++;
+                    }
+                }
+
+                JOptionPane.showMessageDialog(this, "Successfully imported " + importedCount + " students from " + fileToOpen.getAbsolutePath());
+                tableViewStudent();
+            } catch (IOException | NumberFormatException | DateTimeParseException  e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error occurred during import: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_importButtonActionPerformed
+
+    private void exportButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exportButtonActionPerformed
+        // TODO add your handling code here:
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Specify a file to save");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx"));
+
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            if (!fileToSave.getAbsolutePath().endsWith(".xlsx")) {
+                fileToSave = new File(fileToSave + ".xlsx");
+            }
+
+            if (fileToSave.exists()) {
+                int response = JOptionPane.showConfirmDialog(this, "The file already exists. Do you want to overwrite it?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response != JOptionPane.YES_OPTION) {
+                    return; // Stop execution if user does not want to overwrite
+                }
+            }
+
+            try (Workbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("Students");
+                StudentService studentService = new StudentService();
+                List<Student> students = studentService.findAllStudents();
+
+                Row headerRow = sheet.createRow(0);
+                String[] columnHeaders = {"ID", "Name", "Date of Birth", "Gender", "Phone", "Email"};
+                for (int i = 0; i < columnHeaders.length; i++) {
+                    Cell cell = headerRow.createCell(i);
+                    cell.setCellValue(columnHeaders[i]);
+                }
+
+                DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                int rowNum = 1;
+                for (Student student : students) {
+                    Row row = sheet.createRow(rowNum++);
+
+                    row.createCell(0).setCellValue(student.getStudentId());
+                    row.createCell(1).setCellValue(student.getName());
+                    row.createCell(2).setCellValue(dateFormatter.format(student.getDateOfBirth()));
+                    row.createCell(3).setCellValue(student.getGender());
+                    row.createCell(4).setCellValue(student.getPhoneNumber());
+                    row.createCell(5).setCellValue(student.getEmail());
+                }
+
+                // Auto-size columns for better readability
+                for (int i = 0; i < columnHeaders.length; i++) {
+                    sheet.autoSizeColumn(i);
+                }
+
+                try (FileOutputStream fileOut = new FileOutputStream(fileToSave)) {
+                    workbook.write(fileOut);
+                }
+
+                JOptionPane.showMessageDialog(this, "Data exported successfully to " + fileToSave.getAbsolutePath());
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error occurred during export: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }//GEN-LAST:event_exportButtonActionPerformed
 
     private void processAndUpdateProfilePicture(File selectedFile) {
         try {

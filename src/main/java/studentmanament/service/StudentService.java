@@ -118,33 +118,40 @@ public class StudentService {
                 isFirstCondition = false;
             }
             if (dob != null) {
-                if (!isFirstCondition) sql.append(" AND ");
+                if (!isFirstCondition) {
+                    sql.append(" AND ");
+                }
                 sql.append("date_of_birth = ?");
                 parameters.add(dob.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
                 isFirstCondition = false;
             }
             if (phone != null && !phone.isEmpty()) {
-                if (!isFirstCondition) sql.append(" AND ");
+                if (!isFirstCondition) {
+                    sql.append(" AND ");
+                }
                 sql.append("phone_number = ?");
                 parameters.add(phone);
                 isFirstCondition = false;
             }
             if (gender != null && !gender.isEmpty()) {
-                if (!isFirstCondition) sql.append(" AND ");
+                if (!isFirstCondition) {
+                    sql.append(" AND ");
+                }
                 sql.append("gender = ?");
                 parameters.add(gender);
                 isFirstCondition = false;
             }
             if (id != null) {
-                if (!isFirstCondition) sql.append(" AND ");
+                if (!isFirstCondition) {
+                    sql.append(" AND ");
+                }
                 sql.append("student_id = ?");
                 parameters.add(id);
             }
         }
 
         // Execute the query
-        try (Connection conn = DbConnection.getConnection();
-             PreparedStatement pst = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DbConnection.getConnection(); PreparedStatement pst = conn.prepareStatement(sql.toString())) {
 
             int index = 1;
             for (Object param : parameters) {
@@ -163,6 +170,31 @@ public class StudentService {
                     Student student = new Student(dbId, dbName, dbDob, dbPhone, dbGender, dbEmail);
                     students.add(student);
                 }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            // Handle exception
+        }
+
+        return students;
+    }
+
+    public List<Student> findAllStudents() {
+        List<Student> students = new ArrayList<>();
+        String sql = "SELECT * FROM students";
+
+        try (Connection conn = DbConnection.getConnection(); PreparedStatement pst = conn.prepareStatement(sql); ResultSet rs = pst.executeQuery()) {
+
+            while (rs.next()) {
+                int dbId = rs.getInt("student_id");
+                String dbName = rs.getString("name");
+                LocalDate dbDob = rs.getDate("date_of_birth") != null ? rs.getDate("date_of_birth").toLocalDate() : null;
+                String dbPhone = rs.getString("phone_number");
+                String dbGender = rs.getString("gender");
+                String dbEmail = rs.getString("email");
+
+                Student student = new Student(dbId, dbName, dbDob, dbPhone, dbGender, dbEmail);
+                students.add(student);
             }
         } catch (SQLException e) {
             e.printStackTrace();
